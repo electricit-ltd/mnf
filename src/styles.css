@@ -76,4 +76,11 @@ button:hover {
 .responses div {
   margin: 0.5rem 0;
 }
+select {
+  /* same as your input styles */
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
 

@@ -1,36 +1,39 @@
 import React, { useState, useEffect } from "react";
 import "./styles.css";
 import fixtures from "./fixtures.json";
+import roster from "./players.json";
 
 function App() {
-  // existing state
-  const [name, setName]       = useState("");
-  const [status, setStatus]   = useState("");
+  const [name, setName] = useState(roster[0] || "");
+  const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [nextMatch, setNextMatch]   = useState(null);
-
-  // new state for responses
+  const [nextMatch, setNextMatch] = useState(null);
   const [responses, setResponses] = useState({ in: [], maybe: [], out: [] });
 
-  // find nextMatch (unchanged)…
+  // 1. Determine the next upcoming match
   useEffect(() => {
     const today = new Date();
-    const enriched = fixtures.map(f => ({
-      ...f,
-      dateObj: new Date(f.date),
-      dateFormatted: new Date(f.date).toLocaleDateString("en-GB", {
-        weekday: "short", day: "numeric", month: "short"
-      }),
-      fixture: f.opponent,
-      kickoff: f.time
-    }));
+    const enriched = fixtures.map(f => {
+      const dateObj = new Date(f.date);
+      return {
+        ...f,
+        dateObj,
+        dateFormatted: dateObj.toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        }),                   // e.g. "Mon 19 May"
+        fixture: f.opponent,  // map opponent
+        kickoff: f.time       // map time
+      };
+    });
     const upcoming = enriched
       .filter(f => f.dateObj >= today)
       .sort((a, b) => a.dateObj - b.dateObj)[0] || null;
     setNextMatch(upcoming);
   }, []);
 
-  // fetch responses whenever nextMatch changes
+  // 2. Load live responses whenever the next match changes
   useEffect(() => {
     if (!nextMatch) return;
     fetch(`/api/getPoll?date=${nextMatch.date}`)
@@ -39,25 +42,37 @@ function App() {
       .catch(console.error);
   }, [nextMatch]);
 
+  // 3. Handle form submit
   const handleSubmit = async e => {
     e.preventDefault();
     if (!name || !status || !nextMatch) return;
+
     setSubmitting(true);
-    await fetch("/api/submitPoll", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        status,
-        date: nextMatch.date,
-      }),
-    });
-    // Refresh responses
-    const updated = await fetch(`/api/getPoll?date=${nextMatch.date}`).then(r => r.json());
-    setResponses(updated);
-    setSubmitting(false);
-    setName("");
-    setStatus("");
+    try {
+      const res = await fetch("/api/submitPoll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          status,
+          date: nextMatch.date,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+
+      // Refresh live responses
+      const updated = await fetch(`/api/getPoll?date=${nextMatch.date}`).then(r => r.json());
+      setResponses(updated);
+
+      // Reset form
+      setName(roster[0] || "");
+      setStatus("");
+    } catch (err) {
+      console.error(err);
+      alert("Error submitting: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -70,12 +85,23 @@ function App() {
       </h2>
 
       <form onSubmit={handleSubmit} className="poll-form">
-        <input
-          type="text" placeholder="Your name" value={name}
-          onChange={e => setName(e.target.value)} disabled={submitting}
-        />
+        {/* Player roster dropdown */}
         <select
-          value={status} onChange={e => setStatus(e.target.value)}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          disabled={submitting}
+        >
+          {roster.map(player => (
+            <option key={player} value={player}>
+              {player}
+            </option>
+          ))}
+        </select>
+
+        {/* Status dropdown */}
+        <select
+          value={status}
+          onChange={e => setStatus(e.target.value)}
           disabled={submitting}
         >
           <option value="">Select status</option>
@@ -83,6 +109,7 @@ function App() {
           <option value="Maybe">Maybe</option>
           <option value="No">No</option>
         </select>
+
         <button type="submit" disabled={submitting}>
           {submitting ? "Submitting…" : "Submit"}
         </button>
@@ -92,9 +119,15 @@ function App() {
       {nextMatch && (
         <div className="responses">
           <h3>Live Responses</h3>
-          <div><strong>✅ In:</strong> {responses.in.join(", ") || "–"}</div>
-          <div><strong>🤷 Maybe:</strong> {responses.maybe.join(", ") || "–"}</div>
-          <div><strong>❌ Out:</strong> {responses.out.join(", ") || "–"}</div>
+          <div>
+            <strong>✅ In:</strong> {responses.in.join(", ") || "–"}
+          </div>
+          <div>
+            <strong>🤷 Maybe:</strong> {responses.maybe.join(", ") || "–"}
+          </div>
+          <div>
+            <strong>❌ Out:</strong> {responses.out.join(", ") || "–"}
+          </div>
         </div>
       )}
     </div>
