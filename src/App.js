@@ -1,65 +1,86 @@
-import React, { useState } from 'react';
-import './styles.css';
+// src/App.js
+import React, { useState, useEffect } from "react";
+import "./styles.css";
+import fixtures from "./fixtures.json";
 
 function App() {
-  const [name, setName] = useState('');
-  const [status, setStatus] = useState('');
-  const [message, setMessage] = useState('');
+  const [name, setName] = useState("");
+  const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [match, setMatch] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!name || !status) {
-      setMessage('Please enter your name and select a status.');
-      return;
-    }
+  useEffect(() => {
+    const today = new Date();
+    const upcoming = fixtures
+      .map((fixture) => ({
+        ...fixture,
+        dateObj: new Date(fixture.date),
+      }))
+      .filter((fixture) => fixture.dateObj >= today)
+      .sort((a, b) => a.dateObj - b.dateObj)[0];
 
-    const today = new Date().toISOString().split('T')[0];
+    setMatch(upcoming || null);
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!name || !status) return;
+    setSubmitting(true);
 
     try {
-      const response = await fetch('/api/submitPoll', {
-        method: 'POST',
+      const res = await fetch("/api/submitPoll", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, status, date: today })
+        body: JSON.stringify({
+          name,
+          status,
+          date: match?.date,
+        }),
       });
 
-      if (response.ok) {
-        setMessage(`Thanks for voting, ${name}!`);
-        setName('');
-        setStatus('');
-      } else {
-        const text = await response.text();
-        setMessage(`Error: ${text}`);
-      }
+      const result = await res.json();
+      alert(result.body || "Submitted");
+      setName("");
+      setStatus("");
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      console.error(err);
+      alert("Error submitting response.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="poll-container">
-      <h1>Monday 5-a-side</h1>
-      <form onSubmit={handleSubmit}>
+    <div className="container">
+      <div className="card">
+        <h2>Monday 5-a-side</h2>
+        {match && (
+          <p className="fixture">
+            <strong>{match.dateFormatted}</strong>: {match.fixture} @ {match.kickoff}
+          </p>
+        )}
         <input
           type="text"
           placeholder="Your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          disabled={submitting}
         />
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          disabled={submitting}
+        >
           <option value="">Select status</option>
-          <option value="in">I'm in</option>
-          <option value="maybe">Maybe</option>
-          <option value="out">I'm out</option>
+          <option value="Yes">Yes</option>
+          <option value="Maybe">Maybe</option>
+          <option value="No">No</option>
         </select>
-        <button type="submit">Submit</button>
-      </form>
-      {message && (
-        <div className={`message ${message.includes('Thanks') ? 'success' : 'error'}`}>
-          {message}
-        </div>
-      )}
+        <button onClick={handleSubmit} disabled={submitting}>
+          {submitting ? "Submitting..." : "Submit"}
+        </button>
+      </div>
     </div>
   );
 }
