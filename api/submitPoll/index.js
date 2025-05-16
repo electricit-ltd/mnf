@@ -21,26 +21,30 @@ module.exports = async function (context, req) {
     return;
   }
 
-  try {
-    const client = new CosmosClient({ endpoint, key });
-    const container = client.database(databaseId).container(containerId);
+try {
+  const client = new CosmosClient({ endpoint, key });
+  const container = client.database(databaseId).container(containerId);
 
-    await container.items.create({
-      name,
-      status,
-      date,
-      timestamp: new Date().toISOString(),
-    });
+  context.log("Connected to container");
 
-    context.res = {
-      status: 200,
-      body: "Poll submitted",
-    };
-  } catch (err) {
-    context.log.error("Cosmos error:", err.message);
-    context.res = {
-      status: 500,
-      body: `Failed to save: ${err.message}`,
-    };
-  }
+  await container.items.create({
+    name,
+    status,
+    date,
+    timestamp: new Date().toISOString(),
+  });
+
+  context.res = {
+    status: 200,
+    body: "Poll submitted",
+  };
+} catch (err) {
+  context.log.error("Error writing to Cosmos:", err.message, err.stack);
+
+  context.res = {
+    status: 500,
+    body: `Failed to save: ${err.message}`,
+  };
+}
+
 };
