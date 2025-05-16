@@ -63,3 +63,17 @@ button:hover {
   background-color: #f8d7da;
   color: #721c24;
 }
+.responses {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.responses h3 {
+  margin-top: 0;
+}
+.responses div {
+  margin: 0.5rem 0;
+}
+
