@@ -1,12 +1,12 @@
 [
-  { "date": "2025-05-19", "home": "Slotsville", "away": "Dolby City", "time": "19:40" },
-  { "date": "2025-06-02", "home": "Dolby City", "away": "FC Fives", "time": "19:40" },
-  { "date": "2025-06-09", "home": "Straight Cheese", "away": "Dolby City", "time": "20:20" },
-  { "date": "2025-06-16", "home": "Pathetic Bilbao", "away": "Dolby City", "time": "19:00" },
-  { "date": "2025-06-23", "home": "KFC Stoneham", "away": "Dolby City", "time": "20:20" },
-  { "date": "2025-06-30", "home": "Dolby City", "away": "Alreet FC", "time": "19:40" },
-  { "date": "2025-07-07", "home": "Dolby City", "away": "Slotsville", "time": "19:00" },
-  { "date": "2025-07-14", "home": "Dolby City", "away": "Straight Cheese", "time": "19:40" },
-  { "date": "2025-07-21", "home": "Dolby City", "away": "KFC Stoneham", "time": "20:20" },
-  { "date": "2025-07-28", "home": "Dolby City", "away": "Murder on Zidane Floor", "time": "19:00" }
+  { "date": "2025-05-19", "opponent": "Slotsville",            "time": "19:40" },
+  { "date": "2025-06-02", "opponent": "FC Fives",             "time": "19:40" },
+  { "date": "2025-06-09", "opponent": "Straight Cheese",      "time": "20:20" },
+  { "date": "2025-06-16", "opponent": "Pathetic Bilbao",      "time": "19:00" },
+  { "date": "2025-06-23", "opponent": "KFC Stoneham",         "time": "20:20" },
+  { "date": "2025-06-30", "opponent": "Alreet FC",            "time": "19:40" },
+  { "date": "2025-07-07", "opponent": "Slotsville",           "time": "19:00" },
+  { "date": "2025-07-14", "opponent": "Straight Cheese",      "time": "19:40" },
+  { "date": "2025-07-21", "opponent": "KFC Stoneham",         "time": "20:20" },
+  { "date": "2025-07-28", "opponent": "Murder on Zidane Floor", "time": "19:00" }
 ]
