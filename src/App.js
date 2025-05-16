@@ -1,63 +1,67 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import './styles.css';
 
-export default function App() {
-  const [name, setName] = useState("");
-  const [status, setStatus] = useState("yes");
-  const [submitted, setSubmitted] = useState(false);
+function App() {
+  const [name, setName] = useState('');
+  const [status, setStatus] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const date = new Date().toISOString().split("T")[0]; // e.g. 2025-05-20
+    if (!name || !status) {
+      setMessage('Please enter your name and select a status.');
+      return;
+    }
 
-    const res = await fetch("/api/submitPoll", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, status, date }),
-    });
+    const today = new Date().toISOString().split('T')[0];
 
-    if (res.ok) setSubmitted(true);
+    try {
+      const response = await fetch('/api/submitPoll', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, status, date: today })
+      });
+
+      if (response.ok) {
+        setMessage(`Thanks for voting, ${name}!`);
+        setName('');
+        setStatus('');
+      } else {
+        const text = await response.text();
+        setMessage(`Error: ${text}`);
+      }
+    } catch (err) {
+      setMessage(`Error: ${err.message}`);
+    }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "auto", padding: "2rem" }}>
-      <h2>5-A-Side Poll</h2>
-      <p>For this coming Monday</p>
-      {submitted ? (
-        <p>Thanks for voting, {name}!</p>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <input
-            required
-            value={name}
-            placeholder="Your name"
-            onChange={(e) => setName(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem" }}
-          />
-          <label>
-            <input
-              type="radio"
-              value="yes"
-              checked={status === "yes"}
-              onChange={() => setStatus("yes")}
-            />
-            &nbsp;Yes, I can play
-          </label>
-          <br />
-          <label>
-            <input
-              type="radio"
-              value="no"
-              checked={status === "no"}
-              onChange={() => setStatus("no")}
-            />
-            &nbsp;No, not this week
-          </label>
-          <br />
-          <button type="submit" style={{ marginTop: "1rem" }}>
-            Submit
-          </button>
-        </form>
+    <div className="poll-container">
+      <h1>Monday 5-a-side</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Your name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">Select status</option>
+          <option value="in">I'm in</option>
+          <option value="maybe">Maybe</option>
+          <option value="out">I'm out</option>
+        </select>
+        <button type="submit">Submit</button>
+      </form>
+      {message && (
+        <div className={`message ${message.includes('Thanks') ? 'success' : 'error'}`}>
+          {message}
+        </div>
       )}
     </div>
   );
 }
+
+export default App;
