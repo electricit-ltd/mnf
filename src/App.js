@@ -5,16 +5,17 @@ import fixtures from "./fixtures.json";
 import roster from "./players.json";
 
 function App() {
-  const [name, setName] = useState("");           // ← now empty
+  const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [nextMatch, setNextMatch] = useState(null);
   const [responses, setResponses] = useState({ in: [], maybe: [], out: [] });
+  const [copied, setCopied] = useState(false);
 
-  // Find next match
+  // 1️⃣ Find next match
   useEffect(() => {
     const today = new Date();
-    const enriched = fixtures.map(f => {
+    const enriched = fixtures.map((f) => {
       const dateObj = new Date(f.date);
       return {
         ...f,
@@ -28,13 +29,12 @@ function App() {
         kickoff: f.time,
       };
     });
-    const upcoming = enriched
-      .filter(f => f.dateObj >= today)
-      .sort((a, b) => a.dateObj - b.dateObj)[0] || null;
+    const upcoming =
+      enriched.filter((f) => f.dateObj >= today).sort((a, b) => a.dateObj - b.dateObj)[0] || null;
     setNextMatch(upcoming);
   }, []);
 
-  // Load live responses
+  // 2️⃣ Load live responses
   useEffect(() => {
     if (!nextMatch) return;
     fetch(`/api/getPoll?date=${nextMatch.date}`)
@@ -43,27 +43,21 @@ function App() {
       .catch(console.error);
   }, [nextMatch]);
 
+  // 3️⃣ Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !status || !nextMatch) return;
-
     setSubmitting(true);
     try {
       const res = await fetch("/api/submitPoll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          status,
-          date: nextMatch.date,
-        }),
+        body: JSON.stringify({ name, status, date: nextMatch.date }),
       });
       if (!res.ok) throw new Error(await res.text());
-
       // refresh
       const updated = await fetch(`/api/getPoll?date=${nextMatch.date}`).then((r) => r.json());
       setResponses(updated);
-
       setName("");
       setStatus("");
     } catch (err) {
@@ -74,9 +68,28 @@ function App() {
     }
   };
 
+  // 4️⃣ Build & copy summary
+  const copySummary = () => {
+    if (!nextMatch) return;
+    const baseUrl = window.location.origin + window.location.pathname;
+    const intro = `Monday 5-a-side this week: vs ${nextMatch.fixture} — ${nextMatch.dateFormatted} @ ${nextMatch.kickoff}\nWho's in? ${baseUrl}`;
+    const lines = [
+      intro,
+      "",
+      `✅ In: ${responses.in.join(", ") || "–"}`,
+      `🤷 Maybe: ${responses.maybe.join(", ") || "–"}`,
+      `❌ Out: ${responses.out.join(", ") || "–"}`,
+    ].join("\n");
+    navigator.clipboard.writeText(lines).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div className="container">
       <h1>Monday 5-a-side</h1>
+
       <h2>
         {nextMatch
           ? `Next match: vs ${nextMatch.fixture} — ${nextMatch.dateFormatted} @ ${nextMatch.kickoff}`
@@ -117,6 +130,7 @@ function App() {
         </button>
       </form>
 
+      {/* Live Responses */}
       {nextMatch && (
         <div className="responses">
           <h3>Live Responses</h3>
@@ -129,6 +143,12 @@ function App() {
           <div>
             <strong>❌ Out:</strong> {responses.out.join(", ") || "–"}
           </div>
+
+          {/* Copy summary */}
+          <button onClick={copySummary} className="copy-btn">
+            Copy summary
+          </button>
+          {copied && <span className="copied-msg">Copied!</span>}
         </div>
       )}
     </div>

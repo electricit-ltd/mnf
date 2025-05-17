@@ -83,4 +83,15 @@ select {
   border-radius: 4px;
   border: 1px solid #ccc;
 }
+.copy-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+.copied-msg {
+  margin-left: 0.75rem;
+  color: green;
+  font-weight: bold;
+}
+
 
