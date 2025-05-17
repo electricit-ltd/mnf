@@ -1,16 +1,17 @@
+// src/App.js
 import React, { useState, useEffect } from "react";
 import "./styles.css";
 import fixtures from "./fixtures.json";
 import roster from "./players.json";
 
 function App() {
-  const [name, setName] = useState(roster[0] || "");
+  const [name, setName] = useState("");           // ← now empty
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [nextMatch, setNextMatch] = useState(null);
   const [responses, setResponses] = useState({ in: [], maybe: [], out: [] });
 
-  // 1. Determine the next upcoming match
+  // Find next match
   useEffect(() => {
     const today = new Date();
     const enriched = fixtures.map(f => {
@@ -22,9 +23,9 @@ function App() {
           weekday: "short",
           day: "numeric",
           month: "short",
-        }),                   // e.g. "Mon 19 May"
-        fixture: f.opponent,  // map opponent
-        kickoff: f.time       // map time
+        }),
+        fixture: f.opponent,
+        kickoff: f.time,
       };
     });
     const upcoming = enriched
@@ -33,17 +34,16 @@ function App() {
     setNextMatch(upcoming);
   }, []);
 
-  // 2. Load live responses whenever the next match changes
+  // Load live responses
   useEffect(() => {
     if (!nextMatch) return;
     fetch(`/api/getPoll?date=${nextMatch.date}`)
-      .then(res => res.json())
+      .then((r) => r.json())
       .then(setResponses)
       .catch(console.error);
   }, [nextMatch]);
 
-  // 3. Handle form submit
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !status || !nextMatch) return;
 
@@ -60,12 +60,11 @@ function App() {
       });
       if (!res.ok) throw new Error(await res.text());
 
-      // Refresh live responses
-      const updated = await fetch(`/api/getPoll?date=${nextMatch.date}`).then(r => r.json());
+      // refresh
+      const updated = await fetch(`/api/getPoll?date=${nextMatch.date}`).then((r) => r.json());
       setResponses(updated);
 
-      // Reset form
-      setName(roster[0] || "");
+      setName("");
       setStatus("");
     } catch (err) {
       console.error(err);
@@ -85,23 +84,26 @@ function App() {
       </h2>
 
       <form onSubmit={handleSubmit} className="poll-form">
-        {/* Player roster dropdown */}
+        <label htmlFor="player-select">Name:</label>
         <select
+          id="player-select"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           disabled={submitting}
         >
-          {roster.map(player => (
+          <option value="">Select name</option>
+          {roster.map((player) => (
             <option key={player} value={player}>
               {player}
             </option>
           ))}
         </select>
 
-        {/* Status dropdown */}
+        <label htmlFor="status-select">Status:</label>
         <select
+          id="status-select"
           value={status}
-          onChange={e => setStatus(e.target.value)}
+          onChange={(e) => setStatus(e.target.value)}
           disabled={submitting}
         >
           <option value="">Select status</option>
@@ -115,7 +117,6 @@ function App() {
         </button>
       </form>
 
-      {/* Live Responses */}
       {nextMatch && (
         <div className="responses">
           <h3>Live Responses</h3>
